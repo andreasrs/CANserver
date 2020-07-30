@@ -1,20 +1,37 @@
 <html>
     <head>
         <title>CANServer</title>
-        <script src="/js/zepto.min.js"></script>
-        <link rel="icon" href="data:,">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/css/canserver.css">
+        <script src="/js/canserver.js"></script>
     </head>
     <body>
-      <h1>CANServer</h1>
-      <ul>
-        <li><a href="/config">Display Config</a></li>
-        <li><a href="/network">Network Config</a></li>
-        <li><a href="/logs">Logs</a></li>
-        <li><a href="/debug">Debug</a></li>
-      </ul>
-      <button onclick="$.get('/restart');">Restart</button>
+      <nav>
+        <ul>
+          <li class="active"><a href="/">Status</a></li><li><a href="/config">Displays</a></li><li><a href="/network">Network</a></li><li><a href="/logs">Logs</a></li><li><a href="/debug">Debug</a></li>
+        </ul>
+      </nav>
+      <main>
+        <h1>CANserver status</h1>
+        <b>Version: </b>1.0<br>
+        <b>External WiFi IP:</b> 192.168.0.1<br>
+        <b>Uptime:</b> 32 days,  5:34<br>
 
-      <p><a href="https://github.com/joshwardell/CANserver">https://github.com/joshwardell/CANserver</a></p>
+        <button onclick="fetch('/restart');">Restart server</button>
+        <p></p>
+      </main>
+      <footer>
+        <span>
+          Github: <a href="https://github.com/joshwardell/CANserver">https://github.com/joshwardell/CANserver</a>
+        </span>
+        <span>
+        <label for="theme">Visual theme:</label>
+          <select name="theme" id="theme">
+            <option value="business">Business</option>
+            <option value="pastel">Pastel</option>
+          </select> 
+        </span>
+      </footer>
     </body>
 </html>
