@@ -7,6 +7,9 @@
 #include <sstream>
 
 #define RAWCANLOGNAME "/CAN.raw.log"
+#define INTERVALCANLOGNAME "/CAN.interval.log"
+
+#define INTERVALLOGGING_INTERVAL 1000
 
 #define FLUSH_THRESHOLD 200
 
@@ -45,11 +48,36 @@ void CANServer::Logging::setup()
         logDetails.usageCounter = 0;
         
         _logs.insert(CANServer::Logging::LogPair(CANServer::Logging::LogType_Raw, logDetails));
+    }
 
-        if (logDetails.enabled)
+    {
+        //Interval logging
+        LogDetails_t logDetails;
+        logDetails.prefName = String("loginterval");
+        logDetails.enabled = _prefs.getBool(logDetails.prefName.c_str(), false);
+        logDetails.path = String(INTERVALCANLOGNAME);
+        logDetails.usageCounter = 0;
+        
+        _logs.insert(CANServer::Logging::LogPair(CANServer::Logging::LogType_Interval, logDetails));
+    }
+
+    {
+        //Serial logging
+        LogDetails_t logDetails;
+        logDetails.prefName = String("logserial");
+        logDetails.enabled = _prefs.getBool(logDetails.prefName.c_str(), false);
+        logDetails.path = String();
+        logDetails.usageCounter = 0;
+        
+        _logs.insert(CANServer::Logging::LogPair(CANServer::Logging::LogType_Serial, logDetails));
+    }
+
+    //Ensure that all logs that need to be enabled are
+    for (LogMap::const_iterator it = _logs.begin(); it != _logs.end(); it++)
+    {
+        if (it->second.enabled)
         {
-            //This will ensure that the file is open and ready to use when enabled
-            this->enable(CANServer::Logging::LogType_Raw);
+            this->enable(it->first);
         }
     }
 }
@@ -69,15 +97,18 @@ void CANServer::Logging::enable(const CANServer::Logging::LogType logtype)
     {
         it->second.enabled = true;
 
-        //Lets make sure the file is open (if we can open it)
-        it->second.fileHandle = SD.open(it->second.path, FILE_APPEND);
-        if (it->second.fileHandle)
+        if (it->second.path.length() > 0)
         {
-            //File opened fine.  Its ready to use
-        }
-        else
-        {
-            //There was a problem opening the file...  This should be handled some how.
+            //Lets make sure the file is open (if we can open it) - But only if we actually need a file
+            it->second.fileHandle = SD.open(it->second.path, FILE_APPEND);
+            if (it->second.fileHandle)
+            {
+                //File opened fine.  Its ready to use
+            }
+            else
+            {
+                //There was a problem opening the file...  This should be handled some how.
+            }
         }
     }
 }
@@ -98,16 +129,25 @@ void CANServer::Logging::disable(const CANServer::Logging::LogType logtype)
 
 void CANServer::Logging::deleteFile(const CANServer::Logging::LogType logtype)
 {
-    //Ensure that we aren't logging to this file right now
-    this->disable(logtype);
-
-    //Remote the file from disk
-    SD.remove(this->path(logtype)); 
-
-    //If this log file is supposed to be active make sure to start it up now that we have removed the file
-    if (this->isActive(logtype))
+    LogMap::iterator it = _logs.find(logtype);
+    if (it != _logs.end())
     {
-        this->enable(logtype);
+        if (it->second.path.length() > 0)
+        {
+            bool wasActive = it->second.enabled;
+
+            //Ensure that we aren't logging to this file right now
+            this->disable(logtype);
+
+            //Remote the file from disk
+            SD.remove(this->path(logtype)); 
+
+            //If this log file is supposed to be active make sure to start it up now that we have removed the file
+            if (wasActive)
+            {
+                this->enable(logtype);
+            }
+        }
     }
 }
 
@@ -127,15 +167,18 @@ const size_t CANServer::Logging::fileSize(const CANServer::Logging::LogType logt
     LogMap::const_iterator it = _logs.find(logtype);
     if (it != _logs.end())
     {
-        if (SD.exists(it->second.path))
+        if (it->second.path.length() > 0)
         {
-            SDFile rawlog = SD.open(it->second.path, FILE_READ);
-            if (rawlog)
+            if (SD.exists(it->second.path))
             {
-                size_t fileSize = rawlog.size();
-                rawlog.close();
+                SDFile rawlog = SD.open(it->second.path, FILE_READ);
+                if (rawlog)
+                {
+                    size_t fileSize = rawlog.size();
+                    rawlog.close();
 
-                return fileSize;
+                    return fileSize;
+                }
             }
         }
     }
@@ -152,47 +195,102 @@ const String CANServer::Logging::path(const CANServer::Logging::LogType logtype)
     return "";
 }
 
+
+std::stringstream* CANServer::Logging::_generateCandumpOutputString(std::stringstream* stringStreamToUse, const time_t tv_sec, const suseconds_t tv_usec, const CAN_FRAME* frame, const uint8_t busId)
+{
+    stringStreamToUse->str("");
+    stringStreamToUse->clear();
+
+    *stringStreamToUse << "(" 
+        << std::dec << std::setw(10) << std::setfill('0') << tv_sec << "." << std::setw(6) << std::setfill('0') << int(tv_usec) << std::setw(0) << std::setfill(' ')
+        << ") can" << std::dec << (int)busId << " "
+        << std::setw(3) << std::setfill('0') << std::uppercase << std::hex << (uint)(frame->id) << std::setw(0) << std::setfill(' ')
+        << "#";
+    
+    for (int i = 0; i < frame->length; i++) 
+    {
+        *stringStreamToUse << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (uint)(frame->data.byte[i]);
+    }
+
+    return stringStreamToUse;
+}
+
+
 struct timeval _currentTimeOfDay = {0,0};
+unsigned long currentMillis = 0;
+std::stringstream outputStringStream;
 
 void CANServer::Logging::handleMessage(CAN_FRAME *frame, const uint8_t busId)
 {
     gettimeofday(&_currentTimeOfDay, NULL);
+    currentMillis = millis();
+
+    this->_generateCandumpOutputString(&outputStringStream, _currentTimeOfDay.tv_sec, _currentTimeOfDay.tv_usec, frame, busId)->str().c_str();
 
     //Loop through all the loggers and let the active (and valid file handle) ones do somthing
     for (LogMap::iterator it = _logs.begin(); it != _logs.end(); it++)
     {
-        if (it->second.enabled && it->second.fileHandle)
+        if (it->second.enabled)
         {
             switch(it->first)
             {
                 case CANServer::Logging::LogType_Raw:
                 {
-                    std::ostringstream ss;
-                    ss << "(" 
-                        << std::setw(10) << std::setfill('0') << _currentTimeOfDay.tv_sec << "." << std::setw(6) << std::setfill('0') << int(_currentTimeOfDay.tv_usec) << std::setw(0) << std::setfill(' ')
-                        << ") can" << std::dec << (int)busId << " "
-                        << std::setw(3) << std::setfill('0') << std::uppercase << std::hex << (uint)(frame->id) << std::setw(0) << std::setfill(' ')
-                        << "#";
-                    
-                    for (int i = 0; i < frame->length; i++) 
+                    if (it->second.fileHandle)
                     {
-                        ss << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << (uint)(frame->data.byte[i]);
-                    }
-                    it->second.fileHandle.print(ss.str().c_str());
-                    it->second.fileHandle.println();
+                        it->second.fileHandle.println(outputStringStream.str().c_str());
 
-                    //Only flush every once and a while to help keep performance somewhat sane
-                    if (it->second.usageCounter++ > FLUSH_THRESHOLD)
-                    {
-                        it->second.usageCounter = 0;
-                        it->second.fileHandle.flush();
+                        //Only flush every once and a while to help keep performance somewhat sane
+                        if (it->second.usageCounter++ > FLUSH_THRESHOLD)
+                        {
+                            it->second.usageCounter = 0;
+                            it->second.fileHandle.flush();
+                        }
                     }
+                    break;
+                }
+
+                case CANServer::Logging::LogType_Interval:
+                {
+                    //Look up when the last time we saw this frame id was.
+                    LogIntervalBusTrackignMap::iterator busMap = _intervalTracker.find(busId);
+                    if (busMap == _intervalTracker.end())
+                    {
+                        std::pair<LogIntervalBusTrackignMap::iterator,bool> insertResult = _intervalTracker.insert(LogIntervalBusTrackignPair(busId, LogIntervalTrackingMap()));
+                        busMap = insertResult.first;
+                    }
+                    
+                    LogIntervalTrackingMap::iterator intervalTrackerIterator = busMap->second.find(frame->id);
+                    if (intervalTrackerIterator == busMap->second.end())
+                    {
+                        std::pair<LogIntervalTrackingMap::iterator,bool> insertResult = busMap->second.insert(LogIntervalTrackingPair(frame->id, 0));
+                        intervalTrackerIterator = insertResult.first;
+                    }
+
+                    if (currentMillis - intervalTrackerIterator->second > INTERVALLOGGING_INTERVAL)
+                    {
+                        //We can log this frame (it has been long enough since the last one)
+                        it->second.fileHandle.println(outputStringStream.str().c_str());
+                        it->second.fileHandle.flush();
+
+                        //Only flush every once and a while to help keep performance somewhat sane
+                        if (it->second.usageCounter++ > FLUSH_THRESHOLD)
+                        {
+                            it->second.usageCounter = 0;
+                            it->second.fileHandle.flush();
+                        }
+                        
+                        intervalTrackerIterator->second = currentMillis;
+                    }
+
                     break;
                 }
 
                 case CANServer::Logging::LogType_Serial:
                 {
                     //Simple Serial Logging (for testing, not recomended to enable for any kinda long term)
+                    Serial.println(outputStringStream.str().c_str());
+                    
                     break;
                 } 
 
