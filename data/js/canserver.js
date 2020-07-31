@@ -59,9 +59,9 @@
     }
 
     const populateInputs = (parent, data) => {
-        Object.keys(data).forEach(k => {
-            const input = parent.querySelector('input#' + k);
-            input && (input.value = data[k]);
+        Object.keys(data).forEach(id => {
+            const input = parent.querySelector('input#' + id);
+            input && (input.value = data[id]);
         });
     }
 
@@ -159,9 +159,9 @@
             getJSON('/logs_update').then(response => {
                 updateLogsData('');
 
-                if ("sddetails" in response) {
+                if ('sddetails' in response) {
                     if (!response.sddetails.available) {
-                        updateLogsData("No SD card present.  Logging disabled");
+                        updateLogsData('No SD card present.  Logging disabled');
                         hide(submitButton);
                         return;
                     }
@@ -213,7 +213,7 @@
                                 children: [
                                     el('img', {
                                         attributes: {
-                                            style: "vertical-align: text-top;",
+                                            style: 'vertical-align: text-top;',
                                             src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAGdSURBVDjLlZNLSwJhFIa1Rb8iIWhRQUlluuoftDEtC5TKSgINily1CmoT0kJBqwlSaBGBLVxItGgZQQQVFe3bKN7wOjqO2tucwRGvqAMPMzDf+8w5ZzgyADLhGhJQCWi6MCwwQBkJWVWg4jguVSqVKuVyGe0Q3sPtdruaJZJAQ+FcLgeWZWuk02kkk0lEIhFREg6H4fF4GiR0yUlABwqFAorFongnstksUqkUotGoKMjn86CPMAwjSloEFJYgAQUymQxisVhLS9WZyBsEQhu1A/RMfUutxONxsZJQKNRZ0Ey9hCqheSQSid4F9RJqh2ZCor4EBM/z4lxIQvQtoCp2HtexfW+CObAM062uu4BCElSBJWjEzc8Vrr8Y6L3zvQsoTKz6F+H7PAPz7oLRp8eodmSjp7/geDqG2b8Me9CK8zcnXK8O7AWsmDtUF9UHUw/1gr+2O8BzsPm3YLvbhPPlBI7nI6xc6jC9P/Gr3B0flHZhVpgyKwQ6LpPFtwaTdwmGCy0MpwsVWsD6ZVKQpNs6z9iV35PWsY/q6iso+w9crJoc0rRwaAAAAABJRU5ErkJggg=='
                                         }
                                     })
@@ -276,11 +276,17 @@
                             children: [
                                 el('span', {
                                     className: 'item',
-                                    inner: k + ':'
+                                    inner: k + ':',
+                                    attributes: {
+                                        style: 'display: inline-block; min-width: 150px'
+                                    }
                                 }),
                                 el('span', {
                                     className: 'value',
-                                    inner: data.vehiclestatus[k]
+                                    inner: data.vehiclestatus[k],
+                                    attributes: {
+                                        style: 'display: inline-block; min-width: 50px'
+                                    }
                                 }),
 
                             ]
@@ -297,7 +303,7 @@
                         input.onkeypress = (e) => {
                             var key = e.which;
                             if (key == 13) {
-                                postJSON('/debug_save', { "key": e.target.id, "value": e.target.value }, function () {
+                                postJSON('/debug_save', { 'key': e.target.id, 'value': e.target.value }, function () {
                                     updateValues();
                                 });
                             }
@@ -308,7 +314,7 @@
                     });
                 }
 
-                if ("dynamicanalysisitems" in data) {
+                if ('dynamicanalysisitems' in data) {
                     debugParams.appendChild(el('h4', { inner: 'Dynamic Analysis Items' }));
 
                     Object.keys(data.dynamicanalysisitems).forEach(k => {
@@ -325,14 +331,14 @@
             });
 
             const updateValues = () => postJSON('debug_update').then(data => {
-                if ("vehiclestatus" in data) {
+                if ('vehiclestatus' in data) {
                     Object.keys(data.vehiclestatus).forEach(k => {
-                        logs.querySelector('div#' + k + ' span.value').innerText = data.vehiclestatus[k];
+                        debug.querySelector('div#' + k + ' span.value').innerText = data.vehiclestatus[k];
                     });
                 }
-                if ("dynamicanalysisitems" in data) {
+                if ('dynamicanalysisitems' in data) {
                     Object.keys(data.dynamicanalysisitems).forEach(k => {
-                        logs.querySelector('div#' + k + ' span.value').innerText = data.dynamicanalysisitems[k];
+                        debug.querySelector('div#' + k + ' span.value').innerText = data.dynamicanalysisitems[k];
                     });
                 }
             });
