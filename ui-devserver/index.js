@@ -167,6 +167,10 @@ app.get('/debug_update', (req, res) => {
     res.json(debug_update_json);
 });
 
+app.post('/debug_update', (req, res) => {
+    res.json(debug_update_json);
+});
+
 app.post('/debug_save', (req, res) => {
     res.redirect('/debug');
 });

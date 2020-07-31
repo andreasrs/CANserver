@@ -1,26 +1,24 @@
 <html>
     <head>
-        <title>Network Config</title>
-        <script src="/js/zepto.min.js"></script>
-        <link rel="icon" href="data:,">
+        <title>Network</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          body {font-family: sans-serif;}
-          
-          label {
-            width: 150px;
-            display: inline-block;
-          }
-        </style>
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/css/canserver.css">
+        <script src="/js/canserver.js"></script>
     </head>
     <body>
-        <H1>Network Config</H1>
-        <a href="/">Home</a><br><br>
+      <nav>
+        <ul>
+          <li><a href="/" tabindex="1">Status</a></li><li><a href="/config">Displays</a></li><li class="active"><a href="/network">Network</a></li><li><a href="/analysis">Analysis</a></li><li><a href="/logs">Logs</a></li><li><a href="/debug">Debug</a></li>
+        </ul>
+      </nav>
+      <main id="network">
+        <h1>Network</h1>
         <div id="networkparams">
           <div id="loading">Loading...</div>
-          <form action="/network_save" method="POST" id="settingsform" style="display:none;">
-            <label>External SSID: </label><input name="ssid" id="ssid"/> *To disable external wifi connectivity just make sure this box is empty<br>
-            <label>External Password: </label><input name="password" id="password"/> *saved password isn't displayed.  If you leave it empty and hit save it will be removed<br>
+          <form action="/network_save" method="post" id="settingsform" class="hidden">
+            <label>External SSID: </label><input name="ssid" id="ssid" type="text"/><br>*To disable external wifi connectivity just make sure this box is empty<br>
+            <label>External Password: </label><input name="password" id="password" type="text"/><br>*saved password isn't displayed.  If you leave it empty and hit save it will be removed<br>
             <br>
             <button type="submit">Save</button>
           </form>
@@ -30,56 +28,18 @@
             Loading...
           </div>
         </div>
-        <script>
-          function initialLoad() {
-            $.get('/network_update', function(response){
-              populateValues(response);
-            });
-          }
-
-          function populateValues(data) {
-            if ("networksettings" in data) {
-              Object.keys(data.networksettings).forEach((k, i) => {
-                $foundInput = $('input#' + k);
-                $foundInput.val(data.networksettings[k]);
-              });
-              
-              $('div#loading').hide();
-              $('form#settingsform').show();
-            }
-          }
-
-          function loadClients()
-          {
-            $.get('/network_stationlist', function(response){
-
-              if ("stations" in response) {
-                $('#stationlist').html('');
-
-                if (response.stations.length == 0)
-                {
-                  $('#stationlist').html('No Connected Clients');
-                }
-                else
-                {
-                  $list = $('<ul>');
-                  Object.keys(response.stations).forEach((k, i) => {
-                    var theStation = response.stations[k];
-
-                    $listItem = $('<li>').html(theStation.mac + " - " + theStation.ip);
-                    $list.append($listItem);  
-                  });
-
-                  $('#stationlist').html($list);
-                }
-              }
-
-              setTimeout("loadClients();", 10000);
-            });
-          }
-
-          initialLoad();
-          loadClients();
-        </script>
+      </main>
+      <footer>
+        <span>
+          Github: <a href="https://github.com/joshwardell/CANserver">https://github.com/joshwardell/CANserver</a>
+        </span>
+        <span>
+        <label for="theme">Visual theme:</label>
+          <select name="theme" id="theme">
+            <option value="business">Business</option>
+            <option value="pastel">Pastel</option>
+          </select> 
+        </span>
+      </footer>
     </body>
 </html>

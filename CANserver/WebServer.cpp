@@ -666,12 +666,6 @@ littleendian: true
 
 
             //Static content related URL handling
-            server.on("/js/zepto.min.js", HTTP_GET,  [](AsyncWebServerRequest *request){
-                AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/js/zepto.min.js", "application/javascript");
-                response->addHeader("Cache-Control", "max-age=600");
-                request->send(response);
-            });
-
             server.on("/js/canserver.js", HTTP_GET,  [](AsyncWebServerRequest *request){
                 AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/js/canserver.js", "application/javascript");
                 response->addHeader("Cache-Control", "max-age=600");

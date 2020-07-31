@@ -1,9 +1,10 @@
 <html>
     <head>
         <title>Analysis</title>
-        <script src="/js/zepto.min.js"></script>
-        <link rel="icon" href="data:,">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/css/canserver.css">
+        <script src="/js/canserver.js"></script>
         <style>
           body {font-family: sans-serif;}
           
@@ -21,8 +22,13 @@
         </style>
     </head>
     <body>
-        <H1>Analysis</H1>
-        <a href="/">Home</a><br><br>
+      <nav>
+        <ul>
+          <li><a href="/" tabindex="1">Status</a></li><li><a href="/config">Displays</a></li><li><a href="/network">Network</a></li><li class="active"><a href="/analysis">Analysis</a></li><li><a href="/logs">Logs</a></li><li><a href="/debug">Debug</a></li>
+        </ul>
+      </nav>
+      <main id="analysis">
+        <h1>Analysis</h1>
         <div id="dynamicanalysisitems">
           <table>
             <thead>
@@ -45,10 +51,10 @@
               </tr>
             </tbody>
             <tfoot>
-              <tr id="noitems" style="display: none;">
+              <tr id="noitems" class="hidden">
                 <td colspan="10" style="text-align:left !important">No items</td>
               </tr>
-              <tr style="display: none;" id="rowtemplate">
+              <tr class="hidden" id="rowtemplate">
                 <td>
                   <input class="name" name="name" value="" maxlength="10">
                 </td>
@@ -84,10 +90,8 @@
           <br>
           <button onclick="newItem();">New Item</button>
         </div>
-        
 
         <script>
-        
           function hexToDec(hex) {
             var result = 0, digitValue;
             hex = hex.toLowerCase();
@@ -97,57 +101,64 @@
             }
             return result;
           }
-          
-          $.get('/analysis_load', function(response){
+
+          // TODO refactor into canserver.js once chance of merge conflicts is reduced
+          const analysis = document.getElementById('analysis');
+          const getJSON = url => fetch(url).then(r => r.json());
+          const postJSON = (url, data) => fetch(url, { method: 'POST', body: JSON.stringify(data) }).then(r => r.json()).catch(() => {});
+          const show = element => element.classList.remove('hidden');
+          const hide = element => element.classList.add('hidden');
+
+          getJSON('/analysis_load').then(response => {
             var haveItems = false;
             
-            $('tr#loading').remove();
+            analysis.querySelector('tr#loading').remove();
             Object.keys(response).forEach((k, i) => {
               haveItems = true;
               itemdetails = response[k];
               
-              $rowCopy = $("tfoot tr#rowtemplate").clone();
-              $rowCopy.show();
+              rowCopy = analysis.querySelector("tfoot tr#rowtemplate").cloneNode(true);
+              show(rowCopy);
               
-              $rowCopy.attr('id', k);
+              rowCopy.setAttribute('id', k);
               
-              $('input.name', $rowCopy).val(k);
-              $('input.frameid', $rowCopy).val('0x' + itemdetails.frameid.toString(16));
-              $('input.startbit', $rowCopy).val(itemdetails.startBit);
-              $('input.bitlength', $rowCopy).val(itemdetails.bitLength);
-              $('input.factor', $rowCopy).val(itemdetails.factor);
-              $('input.signaloffset', $rowCopy).val(itemdetails.signalOffset);
-              $('input.issigned', $rowCopy).prop('checked', itemdetails.isSigned);
-              $('input.littleendian', $rowCopy).prop('checked', itemdetails.byteOrder);
+              rowCopy.querySelector('input.name').value = k;
+              rowCopy.querySelector('input.frameid').value = '0x' + itemdetails.frameid.toString(16);
+              rowCopy.querySelector('input.startbit').value = itemdetails.startBit;
+              rowCopy.querySelector('input.bitlength').value = itemdetails.bitLength;
+              rowCopy.querySelector('input.factor').value = itemdetails.factor;
+              rowCopy.querySelector('input.signaloffset').value = itemdetails.signalOffset;
+              rowCopy.querySelector('input.issigned').setAttribute('checked', itemdetails.isSigned);
+              rowCopy.querySelector('input.littleendian').setAttribute('checked', itemdetails.byteOrder);
               
-              $('table tbody').append($rowCopy);
+              analysis.querySelector('table tbody').appendChild(rowCopy);
             });
 
             if (!haveItems) {
-              $('tr#noitems').show();
+              show(analysis.querySelector('tr#noitems'))
             }
           });
           
           function newItem()
           {
-            $rowCopy = $("tfoot tr#rowtemplate").clone();
-              $rowCopy.show();
+            rowCopy = analysis.querySelector("tfoot tr#rowtemplate").cloneNode(true);
+            show(rowCopy);
               
-              $rowCopy.attr('id', '----new----');
+            rowCopy.setAttribute('id', '----new----');
               
-              $('table tbody').append($rowCopy);
-              $('tr#noitems').hide();
+            analysis.querySelector('table tbody').appendChild(rowCopy);
+            hide(analysis.querySelector('tr#noitems'));
           }
           
           function saveItem(rowhref)
           {
-            $rowToWorkOn = $(rowhref).parent().parent();
+            rowToWorkOn = rowhref.parentElement.parentElement;
             
-            var newName = $('input.name', $rowToWorkOn).val();
+            var newName = rowToWorkOn.querySelector('input.name').value;
             
             var foundNameCount = 0;
-            $('input.name').each(function (i, obj) {
-              if ($(obj).val() == newName) {
+            analysis.querySelectorAll('input.name').forEach(function (obj, i) {
+              if (obj.value == newName) {
                 foundNameCount++;
               }
             });
@@ -155,28 +166,23 @@
             if (foundNameCount == 1)
             {
               postInfo = {};
-              if ($rowToWorkOn.attr('id') == "----new----") {
+              if (rowToWorkOn.getAttribute('id') === "----new----") {
                 postInfo['state'] = 'new';
               } else {
                 postInfo['state'] = 'update';
               }
               
               postInfo['name'] = newName;
-              postInfo['frameid'] = hexToDec($('input.frameid', $rowToWorkOn).val().substr(2));
-              postInfo['startbit'] = Number($('input.startbit', $rowToWorkOn).val());
-              postInfo['bitlength'] = Number($('input.bitlength', $rowToWorkOn).val());
-              postInfo['factor'] = Number($('input.factor', $rowToWorkOn).val());
-              postInfo['signaloffset'] = Number($('input.signaloffset', $rowToWorkOn).val());
-              postInfo['issigned'] = $('input.issigned', $rowToWorkOn).prop('checked');
-              postInfo['littleendian'] = $('input.littleendian', $rowToWorkOn).prop('checked');
+              postInfo['frameid'] = hexToDec(rowToWorkOn.querySelector('input.frameid').value.substr(2));
+              postInfo['startbit'] = Number(rowToWorkOn.querySelector('input.startbit').value);
+              postInfo['bitlength'] = Number(rowToWorkOn.querySelector('input.bitlength').value);
+              postInfo['factor'] = Number(rowToWorkOn.querySelector('input.factor').value);
+              postInfo['signaloffset'] = Number(rowToWorkOn.querySelector('input.signaloffset').value);
+              postInfo['issigned'] = rowToWorkOn.querySelector('input.issigned').getAttribute('checked');
+              postInfo['littleendian'] = rowToWorkOn.querySelector('input.littleendian').getAttribute('checked');
               
-              $.ajax({
-                url: "/analysis_save",
-                type: 'POST',
-                data: postInfo,
-                success: function(data) {
-                  window.location = "/analysis";
-                }
+              postJSON('/analysis_save', postInfo).then(() => {
+                window.location = "/analysis";
               });
             }
             else
@@ -187,9 +193,10 @@
           
           function deleteItem(rowhref)
           {
-            $rowToWorkOn = $(rowhref).parent().parent();
-            if ($rowToWorkOn.attr('id') == "----new----") {
-              $rowToWorkOn.remove();
+            rowToWorkOn = rowhref.parentElement.parentElement;
+
+            if (rowToWorkOn.getAttribute('id') === "----new----") {
+              rowToWorkOn.remove();
             }
             else
             {
@@ -197,29 +204,37 @@
               if (shouldDelete)
               {
                 postInfo = {};
-                postInfo['name'] = $rowToWorkOn.attr('id');
-                
-                $.ajax({
-                  url: "/analysis_delete",
-                  type: 'POST',
-                  data: postInfo,
-                  success: function(data) {
-                    window.location = "/analysis";
-                  }
+                postInfo['name'] = rowToWorkOn.getAttribute('id');
+
+                postJSON('/analysis_delete', postInfo).then(() => {
+                  window.location = "/analysis";
                 });
               }
             }
           }
           
           function updateLoad() {
-            $.get('/analysis_update', function(response){
+            getJSON('/analysis_update').then(response => {
               Object.keys(response).forEach((k, i) => {
-                  $('tr#' + k + ' td.value').html(response[k]);
+                  analysis.querySelector('tr#' + k + ' td.value').innerHTML = response[k];
                 });
             });
           }
           
           setInterval('updateLoad()', 1000);
         </script>
+      </main>
+      <footer>
+        <span>
+          Github: <a href="https://github.com/joshwardell/CANserver">https://github.com/joshwardell/CANserver</a>
+        </span>
+        <span>
+        <label for="theme">Visual theme:</label>
+          <select name="theme" id="theme">
+            <option value="business">Business</option>
+            <option value="pastel">Pastel</option>
+          </select> 
+        </span>
+      </footer>
     </body>
 </html>

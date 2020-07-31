@@ -1,54 +1,46 @@
 <html>
     <head>
-        <title>Display Config</title>
-        <script src="/js/zepto.min.js"></script>
-        <link rel="icon" href="data:,">
+        <title>Display</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          body {font-family: sans-serif;}
-        
-          input:not([type='checkbox']) {
-            width: 400px;
-            margin-left:10px;
-            font-family: monospace;
-          }
-        </style>
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" type="text/css" href="/css/canserver.css">
+        <script src="/js/canserver.js"></script>
     </head>
     <body>
-        <H1>Display Config</H1>
-        <a href="/">Home</a><br><br>
+      <nav>
+        <ul>
+          <li><a href="/" tabindex="1">Status</a></li><li class="active"><a href="/config">Displays</a></li><li><a href="/network">Network</a></li><li><a href="/analysis">Analysis</a></li><li><a href="/logs">Logs</a></li><li><a href="/debug">Debug</a></li>
+        </ul>
+      </nav>
+      <main id="display">
+        <h1>Displays</h1>
         <div id="configparams">
           <div id="loading">Loading...</div>
-          <form action="/config_save" method="POST" id="settingsform" style="display:none;">
-            Display 0: <input name="disp0" id="disp0"/><br>
-            Display 1: <input name="disp1" id="disp1"/><br>
-            Display 2: <input name="disp2" id="disp2"/><br>
-            Display 3: <input name="disp3" id="disp3"/><br>
+          <form action="/config_save" method="post" id="settingsform" class="hidden">
+            <label for="disp0">Display 0:</label>
+            <input name="disp0" id="disp0" type="text"/><br>
+            <label for="disp1">Display 1:</label>
+            <input name="disp1" id="disp1" type="text"/><br>
+            <label for="disp2">Display 2:</label>
+            <input name="disp2" id="disp2" type="text"/><br>
+            <label for="disp3">Display 3:</label>
+            <input name="disp3" id="disp3" type="text"/><br>
             <!-- Display Off: <input name="dispOff" id="dispOff"/><br>-->
-            <br>
             <button type="submit">Save</button>
           </form>
         </div>
-        <script>
-          function initialLoad() {
-            $.get('/config_update', function(response){
-              populateValues(response);
-            });
-          }
-
-          function populateValues(data) {
-            if ("displaysettings" in data) {
-              Object.keys(data.displaysettings).forEach((k, i) => {
-                $foundInput = $('input#' + k);
-                $foundInput.val(data.displaysettings[k]);
-              });
-              
-              $('div#loading').hide();
-              $('form#settingsform').show();
-            }
-          }
-
-          initialLoad();
-        </script>
+      </main>
+      <footer>
+        <span>
+          Github: <a href="https://github.com/joshwardell/CANserver">https://github.com/joshwardell/CANserver</a>
+        </span>
+        <span>
+        <label for="theme">Visual theme:</label>
+          <select name="theme" id="theme">
+            <option value="business">Business</option>
+            <option value="pastel">Pastel</option>
+          </select> 
+        </span>
+      </footer>
     </body>
 </html>

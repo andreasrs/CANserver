@@ -1,100 +1,37 @@
 <html>
-    <head>
-        <title>Debug</title>
-        <script src="/js/zepto.min.js"></script>
-        <link rel="icon" href="data:,">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-          body {font-family: sans-serif;}
-          
-          input {
-            width: 50px;
-            margin-left:10px;
-          }
-          .item {
-            display: inline-block;
-            width:150px;
-          }
-          .value {
-            display: inline-block;
-            width:50px;
-          }
-        </style>
-    </head>
-    <body>
-        <H1>Debug</H1>
-        <a href="/">Home</a><br><br>
-        <div id="debugparams">Loading...</div>
-        <script>
-          function initialLoad() {
-            $.get('/debug_update', function(response){
-              populateValues(response, true);
-            });
-          }
-          
-          function updateLoad() {
-            $.get('/debug_update', function(response){
-              populateValues(response, false);
-            });
-          }
-          
-          function populateValues(data, initialLoad) {
-            if (initialLoad)
-            {
-              $('#debugparams').html('');
-              if ("vehiclestatus" in data) {
-                Object.keys(data.vehiclestatus).forEach((k, i) => {
-                  $newDiv = $('<div id="' + k + '"/>');
-                  $labelSpan = $('<span/>').addClass("item").html(k + ":");
-                  $newDiv.append($labelSpan);
-                  $theValue = $('<span/>').addClass('value').html(data.vehiclestatus[k]);
-                  $newDiv.append($theValue);
-                  $input = $('<input id="' + k + '"/>').val(data.vehiclestatus[k]).on('focus', function(e) {
-                      this.select();
-                    }).keypress(function (e) {
-                      var key = e.which;
-                      if(key == 13) {
-                        $this = $(this);
-                        $.post('/debug_save', { "key": $this.attr('id'), "value": $this.val() }, function(response) {
-                          updateLoad();
-                        });
-                        this.select();
-                      }
-                  });
-                  $newDiv.append($input);
-                  
-                  $('#debugparams').append($newDiv);
-                });
-              }
-              
-              if ("dynamicanalysisitems" in data) {
-                $('#debugparams').append($("<h4>Dynamic Analysis Items</h4>"));
-                Object.keys(data.dynamicanalysisitems).forEach((k, i) => {
-                  $newDiv = $('<div id="' + k + '"/>');
-                  $labelSpan = $('<span/>').addClass("item").html(k + ":");
-                  $newDiv.append($labelSpan);
-                  $theValue = $('<span/>').addClass('value').html(data.dynamicanalysisitems[k]);
-                  $newDiv.append($theValue);
-                  
-                  $('#debugparams').append($newDiv);
-                });
-              }
-            } else {
-              if ("vehiclestatus" in data) {
-                Object.keys(data.vehiclestatus).forEach((k, i) => {
-                  $('div#' + k + ' span.value').html(data.vehiclestatus[k]);
-                }); 
-              }
-              if ("dynamicanalysisitems" in data) {
-                Object.keys(data.dynamicanalysisitems).forEach((k, i) => {
-                  $('div#' + k + ' span.value').html(data.dynamicanalysisitems[k]);
-                }); 
-              }
-            }
-          }
-          
-          initialLoad();
-          setInterval('updateLoad()', 1000);
-        </script>
-    </body>
+  <head>
+    <title>Debug</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" type="text/css" href="/css/canserver.css">
+    <script src="/js/canserver.js"></script>
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><a href="/" tabindex="1">Status</a></li>
+        <li><a href="/config">Displays</a></li>
+        <li><a href="/network">Network</a></li>
+        <li><a href="/analysis">Analysis</a></li>
+        <li><a href="/logs">Logs</a></li>
+        <li class="active"><a href="/debug">Debug</a></li>
+      </ul>
+    </nav>
+    <main id="debug">
+      <h1>Debug</h1>
+      <div id="debugparams">Loading...</div>
+    </main>
+    <footer>
+      <span>
+        Github: <a href="https://github.com/joshwardell/CANserver">https://github.com/joshwardell/CANserver</a>
+      </span>
+      <span>
+        <label for="theme">Visual theme:</label>
+        <select name="theme" id="theme">
+          <option value="business">Business</option>
+          <option value="pastel">Pastel</option>
+        </select>
+      </span>
+    </footer>
+  </body>
 </html>
