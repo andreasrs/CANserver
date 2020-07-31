@@ -128,8 +128,8 @@
               rowCopy.querySelector('input.bitlength').value = itemdetails.bitLength;
               rowCopy.querySelector('input.factor').value = itemdetails.factor;
               rowCopy.querySelector('input.signaloffset').value = itemdetails.signalOffset;
-              rowCopy.querySelector('input.issigned').setAttribute('checked', itemdetails.isSigned);
-              rowCopy.querySelector('input.littleendian').setAttribute('checked', itemdetails.byteOrder);
+              rowCopy.querySelector('input.issigned').checked = itemdetails.isSigned;
+              rowCopy.querySelector('input.littleendian').checked = itemdetails.byteOrder;
               
               analysis.querySelector('table tbody').appendChild(rowCopy);
             });
@@ -178,8 +178,8 @@
               postInfo['bitlength'] = Number(rowToWorkOn.querySelector('input.bitlength').value);
               postInfo['factor'] = Number(rowToWorkOn.querySelector('input.factor').value);
               postInfo['signaloffset'] = Number(rowToWorkOn.querySelector('input.signaloffset').value);
-              postInfo['issigned'] = rowToWorkOn.querySelector('input.issigned').getAttribute('checked');
-              postInfo['littleendian'] = rowToWorkOn.querySelector('input.littleendian').getAttribute('checked');
+              postInfo['issigned'] = rowToWorkOn.querySelector('input.issigned').checked;
+              postInfo['littleendian'] = rowToWorkOn.querySelector('input.littleendian').checked;
               
               postJSON('/analysis_save', postInfo).then(() => {
                 window.location = "/analysis";
