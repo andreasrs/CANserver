@@ -1,6 +1,6 @@
 (() => {
     // layout theming utils
-    const themes = {
+    const colorThemes = {
         // https://coolors.co/9a8f97-c3baba-e9e3e6-b2b2b2-736f72
         business: {
             '--color-1': 'hsla(315, 2%, 44%, 1)', /* sonic-silver */
@@ -19,12 +19,12 @@
         }
     }
 
-    const activateTheme = name => {
-        const theme = themes[name];
+    const activateColorTheme = name => {
+        const colorTheme = colorThemes[name];
 
-        if (theme) {
-            Object.keys(theme).forEach(color => {
-                document.documentElement.style.setProperty(color, theme[color]);
+        if (colorTheme) {
+            Object.keys(colorTheme).forEach(color => {
+                document.documentElement.style.setProperty(color, colorTheme[color]);
             });
         }
     }
@@ -58,7 +58,7 @@
         return element;
     }
 
-    const populateInputs = (parent, data) => {
+    const populateInputValues = (parent, data) => {
         Object.keys(data).forEach(id => {
             const input = parent.querySelector('input#' + id);
             input && (input.value = data[id]);
@@ -70,47 +70,47 @@
         show(parent.querySelector('form#settingsform'));
     }
 
-    const show = element => element.classList.remove('hidden');
-    const hide = element => element.classList.add('hidden');
+    const show = element => element && element.classList && element.classList.remove('hidden');
+    const hide = element => element && element.classList && element.classList.add('hidden');
 
     const startApp = () => {
         // STATUS page
-        const status = document.getElementById('status');
+        const statusEl = document.getElementById('status');
 
-        if (status) {
-            const restartButton = status.querySelector('#restart');
-            restartButton.onclick = () => fetch('/restart');
+        if (statusEl) {
+            const restartButtonEl = statusEl.querySelector('#restart');
+            restartButtonEl.onclick = () => fetch('/restart');
         }
 
         // DISPLAY page
-        const display = document.getElementById('display');
+        const displayEl = document.getElementById('display');
 
-        if (display) {
+        if (displayEl) {
             getJSON('/config_update').then(data => {
                 if ('displaysettings' in data) {
-                    populateInputs(display, data.displaysettings);
-                    showInputsWithLoadedData(display);
+                    populateInputValues(displayEl, data.displaysettings);
+                    showInputsWithLoadedData(displayEl);
                 }
             });
         }
 
         // NETWORK page
-        const network = document.getElementById('network');
+        const networkEl = document.getElementById('network');
 
-        if (network) {
+        if (networkEl) {
             // load network data
             getJSON('/network_update').then(data => {
                 if ('networksettings' in data) {
-                    populateInputs(network, data.networksettings);
-                    showInputsWithLoadedData(network);
+                    populateInputValues(networkEl, data.networksettings);
+                    showInputsWithLoadedData(networkEl);
                 }
             });
 
             let fetchingClients = false;
 
             const loadClients = () => {
-                const stationList = network.querySelector('#stationlist');
-                stationList.innerText = '';
+                const stationListEl = network.querySelector('#stationlist');
+                stationListEl.innerText = '';
 
                 // avoid building a big backlog of requests if server is slow
                 if (!fetchingClients) {
@@ -121,16 +121,16 @@
                             const stations = data.stations;
 
                             if (stations.length === 0) {
-                                stationList.innerText = 'No connected clients';
+                                stationListEl.innerText = 'No connected clients';
                             } else {
-                                const list = el('ul', {
-                                    children: Object.keys(stations).map(k => {
-                                        const station = stations[k];
+                                const listEl = el('ul', {
+                                    children: Object.keys(stations).map(stationId => {
+                                        const station = stations[stationId];
                                         return station && el('li', { inner: station.mac + ' - ' + station.ip });
                                     }).filter(Boolean)
                                 })
 
-                                stationList.appendChild(list);
+                                stationListEl.appendChild(listEl);
                             }
                         }
                         fetchingClients = false;
@@ -149,12 +149,12 @@
         // TODO: refactor deferred because of potential conflicts
 
         // LOGS page
-        const logs = document.getElementById('logs');
+        const logsEl = document.getElementById('logs');
 
-        if (logs) {
-            const logsData = logs.querySelector('#logsdata');
-            const submitButton = logs.querySelector('button#submit');
-            const updateLogsData = data => logsData.innerHTML = data;
+        if (logsEl) {
+            const logsDataEl = logsEl.querySelector('#logsdata');
+            const submitButtonEl = logsEl.querySelector('button#submit');
+            const updateLogsData = data => logsDataEl.innerHTML = data;
 
             getJSON('/logs_update').then(response => {
                 updateLogsData('');
@@ -162,53 +162,53 @@
                 if ('sddetails' in response) {
                     if (!response.sddetails.available) {
                         updateLogsData('No SD card present.  Logging disabled');
-                        hide(submitButton);
+                        hide(submitButtonEl);
                         return;
                     }
                 }
 
-                Object.keys(response).forEach(k => {
-                    newDiv = el('div', { attributes: { id: k }, className: 'separator' });
+                Object.keys(response).forEach(entryId => {
+                    const logentryEl = el('div', { attributes: { id: entryId }, className: 'separator' });
 
-                    if (k === 'sddetails') {
-                        sddetails = response[k];
+                    if (entryId === 'sddetails') {
+                        const sddetails = response[entryId];
 
-                        newDiv.appendChild(el('div', {
+                        logentryEl.appendChild(el('div', {
                             children: [
                                 el('span', { inner: 'Total SD Space ' + sddetails.totalkbytes + ' KB' })
                             ]
                         }));
 
-                        newDiv.appendChild(el('div', {
+                        logentryEl.appendChild(el('div', {
                             children: [
                                 el('span', { inner: 'Used SD Space ' + sddetails.usedkbytes + ' KB' })
                             ]
                         }));
 
-                        logsData.prepend(newDiv);
+                        logsDataEl.prepend(logentryEl);
                     } else {
-                        const labelSpan = el('span', { inner: k, className: 'logname item' });
+                        const labelSpanEl = el('span', { inner: entryId, className: 'logname item' });
+                        logentryEl.appendChild(labelSpanEl);
 
-                        newDiv.appendChild(labelSpan);
-                        loginfo = response[k];
-
-                        const input = el('input', {
+                        const inputEl = el('input', {
                             attributes: {
                                 type: 'checkbox',
-                                name: k,
-                                id: k
+                                name: entryId,
+                                id: entryId
                             }
                         });
-                        input.checked = loginfo.enabled;
-                        newDiv.appendChild(input);
+                        
+                        const loginfo = response[entryId];
+                        inputEl.checked = loginfo.enabled;
+                        logentryEl.appendChild(inputEl);
 
                         if (loginfo.hasfile) {
-                            const downloadLink = el('a', {
+                            const downloadLinkEl = el('a', {
                                 className: 'download',
                                 attributes: {
                                     alt: 'Download',
                                     title: 'Download',
-                                    href: '/log_download?id=' + k
+                                    href: '/log_download?id=' + entryId
                                 },
                                 children: [
                                     el('img', {
@@ -220,15 +220,15 @@
                                 ]
                             });
 
-                            downloadLink.onclick = () => confirm('Downloading a large file will temporally impact the logging and operation of the CANServer and microDisplays.  Are you sure you want to do this now?');
-                            newDiv.appendChild(downloadLink);
+                            downloadLinkEl.onclick = () => confirm('Downloading a large file will temporally impact the logging and operation of the CANServer and microDisplays.  Are you sure you want to do this now?');
+                            logentryEl.appendChild(downloadLinkEl);
 
-                            const deleteLink = el('a', {
+                            const deleteLinkEl = el('a', {
                                 className: 'delete',
                                 attributes: {
                                     alt: 'Delete',
                                     title: 'Delete',
-                                    href: '/log_delete?id=' + k
+                                    href: '/log_delete?id=' + entryId
                                 },
                                 children: [
                                     el('img', {
@@ -240,50 +240,50 @@
                                 ]
                             });
 
-                            deleteLink.onclick = () => confirm('Are you sure you want to delete this log file?');
-                            newDiv.appendChild(deleteLink);
+                            deleteLinkEl.onclick = () => confirm('Are you sure you want to delete this log file?');
+                            logentryEl.appendChild(deleteLinkEl);
 
-                            const fileSizeSpan = el('span', {
+                            const fileSizeSpanEl = el('span', {
                                 className: 'indent',
                                 inner: '[ size: ' + loginfo.filesize + ' ]'
                             });
 
-                            newDiv.appendChild(fileSizeSpan);
+                            logentryEl.appendChild(fileSizeSpanEl);
                         }
 
-                        logsData.appendChild(newDiv);
+                        logsDataEl.appendChild(logentryEl);
                     }
                 });
             });
         }
 
         // DEBUG page
-        const debug = document.getElementById('debug');
+        const debugEl = document.getElementById('debug');
 
-        if (debug) {
-            const debugParams = debug.querySelector('#debugparams');
-            const updateDebugdata = data => debugParams.innerHTML = data;
+        if (debugEl) {
+            const debugParamsEl = debug.querySelector('#debugparams');
+            const updateDebugdata = data => debugParamsEl.innerHTML = data;
 
             const populateValues = () => getJSON('/debug_update').then(data => {
                 updateDebugdata('');
 
                 if ('vehiclestatus' in data) {
-                    Object.keys(data.vehiclestatus).forEach(k => {
-                        newDiv = el('div', {
+                    Object.keys(data.vehiclestatus).forEach(statusId => {
+                        const statusEl = el('div', {
                             attributes: {
-                                id: k
+                                id: statusId
                             },
                             children: [
                                 el('span', {
                                     className: 'item',
-                                    inner: k + ':',
+                                    inner: statusId + ':',
                                     attributes: {
                                         style: 'display: inline-block; min-width: 150px'
                                     }
                                 }),
                                 el('span', {
                                     className: 'value',
-                                    inner: data.vehiclestatus[k],
+                                    inner: data.vehiclestatus[statusId],
                                     attributes: {
                                         style: 'display: inline-block; min-width: 50px'
                                     }
@@ -292,15 +292,15 @@
                             ]
                         });
 
-                        const input = el('input', {
+                        const inputEl = el('input', {
                             attributes: {
-                                id: k
+                                id: statusId
                             }
                         });
 
-                        input.value = data.vehiclestatus[k];
+                        inputEl.value = data.vehiclestatus[statusId];
 
-                        input.onkeypress = (e) => {
+                        inputEl.onkeypress = e => {
                             var key = e.which;
                             if (key == 13) {
                                 postJSON('/debug_save', { 'key': e.target.id, 'value': e.target.value }, function () {
@@ -309,36 +309,36 @@
                             }
                         }
 
-                        newDiv.appendChild(input);
-                        debugParams.appendChild(newDiv);
+                        statusEl.appendChild(inputEl);
+                        debugParamsEl.appendChild(statusEl);
                     });
                 }
 
                 if ('dynamicanalysisitems' in data) {
                     debugParams.appendChild(el('h4', { inner: 'Dynamic Analysis Items' }));
 
-                    Object.keys(data.dynamicanalysisitems).forEach(k => {
-                        newDiv = el('div', {
+                    Object.keys(data.dynamicanalysisitems).forEach(itemId => {
+                        const dynamicEl = el('div', {
                             attributes: { id: k }, children: [
-                                el('span', { className: 'item', inner: k + ':' }),
-                                el('span', { className: 'value', inner: data.dynamicanalysisitems[k] })
+                                el('span', { className: 'item', inner: itemId + ':' }),
+                                el('span', { className: 'value', inner: data.dynamicanalysisitems[itemId] })
                             ]
                         });
 
-                        debugParams.appendChild(newDiv);
+                        debugParamsEl.appendChild(dynamicEl);
                     });
                 }
             });
 
             const updateValues = () => postJSON('debug_update').then(data => {
                 if ('vehiclestatus' in data) {
-                    Object.keys(data.vehiclestatus).forEach(k => {
-                        debug.querySelector('div#' + k + ' span.value').innerText = data.vehiclestatus[k];
+                    Object.keys(data.vehiclestatus).forEach(statusId => {
+                        debug.querySelector('div#' + statusId + ' span.value').innerText = data.vehiclestatus[statusId];
                     });
                 }
                 if ('dynamicanalysisitems' in data) {
-                    Object.keys(data.dynamicanalysisitems).forEach(k => {
-                        debug.querySelector('div#' + k + ' span.value').innerText = data.dynamicanalysisitems[k];
+                    Object.keys(data.dynamicanalysisitems).forEach(itemId => {
+                        debug.querySelector('div#' + itemId + ' span.value').innerText = data.dynamicanalysisitems[itemId];
                     });
                 }
             });
@@ -348,18 +348,18 @@
         }
 
         // layout theme selector
-        const themeSelect = document.getElementById('theme');
+        const themeSelectEl = document.getElementById('theme');
 
-        if (themeSelect) {
+        if (themeSelectEl) {
             // activate persisted choice
             const persistedSelect = localStorage.getItem('theme') || 'business';
-            activateTheme(persistedSelect)
-            themeSelect.value = persistedSelect;
+            activateColorTheme(persistedSelect)
+            themeSelectEl.value = persistedSelect;
 
             // activate and persist new theme choice
-            themeSelect.onchange = e => {
+            themeSelectEl.onchange = e => {
                 const name = e.target.value;
-                activateTheme(name);
+                activateColorTheme(name);
                 localStorage.setItem('theme', name);
             };
         }
