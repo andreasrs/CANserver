@@ -161,7 +161,7 @@
 
                 if ('sddetails' in response) {
                     if (!response.sddetails.available) {
-                        updateLogsData('No SD card present.  Logging disabled');
+                        updateLogsData('No SD card present. Logging disabled');
                         hide(submitButtonEl);
                         return;
                     }
@@ -315,11 +315,11 @@
                 }
 
                 if ('dynamicanalysisitems' in data) {
-                    debugParams.appendChild(el('h4', { inner: 'Dynamic Analysis Items' }));
+                    debugParamsEl.appendChild(el('h4', { inner: 'Dynamic Analysis Items' }));
 
                     Object.keys(data.dynamicanalysisitems).forEach(itemId => {
                         const dynamicEl = el('div', {
-                            attributes: { id: k }, children: [
+                            attributes: { id: itemId }, children: [
                                 el('span', { className: 'item', inner: itemId + ':' }),
                                 el('span', { className: 'value', inner: data.dynamicanalysisitems[itemId] })
                             ]

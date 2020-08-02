@@ -158,7 +158,7 @@ footer {
 }
 
 .indent {
-    margin-left: 10px;
+    margin-left: var(--large);
 }
 
 .separator {
