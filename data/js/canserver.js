@@ -261,8 +261,8 @@
         const debugEl = document.getElementById('debug');
 
         if (debugEl) {
-            const debugParamsEl = debug.querySelector('#debugparams');
-            const updateDebugdata = data => debugParamsEl.innerHTML = data;
+            const debugDataEl = debug.querySelector('#debugdata');
+            const updateDebugdata = data => debugDataEl.innerHTML = data;
 
             const populateValues = () => getJSON('/debug_update').then(data => {
                 updateDebugdata('');
@@ -310,12 +310,12 @@
                         }
 
                         statusEl.appendChild(inputEl);
-                        debugParamsEl.appendChild(statusEl);
+                        debugDataEl.appendChild(statusEl);
                     });
                 }
 
                 if ('dynamicanalysisitems' in data) {
-                    debugParamsEl.appendChild(el('h4', { inner: 'Dynamic Analysis Items' }));
+                    debugDataEl.appendChild(el('h4', { inner: 'Dynamic Analysis Items' }));
 
                     Object.keys(data.dynamicanalysisitems).forEach(itemId => {
                         const dynamicEl = el('div', {
@@ -325,7 +325,7 @@
                             ]
                         });
 
-                        debugParamsEl.appendChild(dynamicEl);
+                        debugDataEl.appendChild(dynamicEl);
                     });
                 }
             });
