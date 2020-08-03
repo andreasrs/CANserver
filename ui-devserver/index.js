@@ -139,6 +139,18 @@ app.get('/display_load', (req, res) => {
     res.send('return "65535c" .. math.floor(CANServer_getVar("BattPower") * 10) .. "vWK  Bu" .. math.floor(CANServer_getVar("BattPower_Scaled_Bar")) .. "b0m100r"');
 });
 app.get('/display_stats', (req, res) => {
+    if (req.query.dispId === '3') {
+        res.json({
+            state:false,
+            errorstring: "Problem with display 3",
+            mean:0.9,
+            mode:1,
+            max:1,
+            min:0,
+            stddev:0.3
+        });
+        return;
+    }
     res.json({
         state:true,
         errorstring:"",

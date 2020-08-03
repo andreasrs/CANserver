@@ -30,7 +30,8 @@
     }
 
     // data fetching utils
-    const getJSON = url => fetch(url).then(r => r.json());
+    const getText = url => fetch(url).then(r => r.text()).catch(console.error);
+    const getJSON = url => fetch(url).then(r => r.json()).catch(console.error);
     const postJSON = (url, data) => fetch(url, { method: 'POST', body: JSON.stringify(data) }).then(r => r.json()).catch(console.error);
 
     // dom utils
@@ -83,15 +84,119 @@
         }
 
         // DISPLAY page
-        const displayEl = document.getElementById('display');
+        const displaysEl = document.getElementById('displays');
 
-        if (displayEl) {
-            getJSON('/config_update').then(data => {
-                if ('displaysettings' in data) {
-                    populateInputValues(displayEl, data.displaysettings);
-                    showInputsWithLoadedData(displayEl);
-                }
-            });
+        if (displaysEl) {
+            const selectEl = displaysEl.querySelector('select#displayid');
+            const displaysScriptEl = displaysEl.querySelector('textarea#displayscript');
+            const displaysSaveButtonEl = displaysEl.querySelector('button#save');
+
+            
+
+            const selectedDisplayId = () => {
+                const selectedDisplayIndex = selectEl.selectedIndex;
+                return selectEl.options[selectedDisplayIndex].value;
+            }
+
+            const good = statusEl => {
+                statusEl.innerText = 'Good';
+                statusEl.classList.add('good');
+                statusEl.classList.remove('bad');
+            };
+
+            const bad = statusEl => {
+                statusEl.innerText = 'Bad';
+                statusEl.classList.add('bad');
+                statusEl.classList.remove('good');
+            };
+
+            const loadStatus = displayId => {
+                const stateEl = displaysEl.querySelector('span#scriptstate');
+                const scriptstatsEl = displaysEl.querySelector('div#scriptstats');
+                const errorsEl = displaysEl.querySelector('span#errormessage');
+
+                return getJSON('/display_stats?dispId=' + displayId).then(data => {
+                    if (data.state == true) {
+                        good(stateEl);
+                        
+                        displaysEl.querySelector('span#meantime').innerText = data.mean;
+                        displaysEl.querySelector('span#maxtime').innerText = data.max;
+                        displaysEl.querySelector('span#mintime').innerText = data.min;
+                        displaysEl.querySelector('span#stddevtime').innerText = data.stddev;
+                        
+                        show(scriptstatsEl);
+                        hide(errorsEl);
+                    } else {
+                        bad(stateEl);
+
+                        hide(scriptstatsEl);
+                        errorsEl.innerText = data.errorstring;
+                        show(errorsEl);
+                    }
+                });
+            }
+
+            const loadDisplayScript = displayId => {
+                return getText('/display_load?dispId=' + displayId).then(text => {
+                    displaysScriptEl.value = text;
+                    displaysScriptEl.disabled = false;
+                    show(displaysSaveButtonEl);
+                    loadStatus(displayId);
+                });
+            }
+
+            const saveScript = displayId => {
+                const scriptText = displaysScriptEl.value;
+                const postInfo = {
+                    script: scriptText,
+                    dispId: displayId
+                };
+
+                postJSON('/display_save', postInfo).then(() => loadStatus(displayId));
+            }
+
+            // initialize default UI state
+            displaysScriptEl.disabled = true;
+            hide(displaysSaveButtonEl);
+
+            // bootstrap TLN for line numbers
+            TLN.append_line_numbers('displayscript');
+
+            // handle <tab> input
+            displaysScriptEl.onkeydown = function(e) {
+              const keyCode = e.keyCode || e.which;
+            
+              if (keyCode == 9) {
+                e.preventDefault();
+
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+            
+                // set textarea value to: text before caret + tab + text after caret
+                this.value = (this.value.substring(0, start)
+                            + "\t"
+                            + this.value.substring(end));
+            
+                // put caret at right position again
+                this.selectionStart = this.selectionEnd = start + 1;
+              }
+            };
+
+            displaysSaveButtonEl.onclick = () => {
+                const displayId = selectedDisplayId();
+                saveScript(displayId);
+            }
+
+            selectEl.onchange = () => {
+                const displayId = selectedDisplayId();
+                loadDisplayScript(displayId);
+            }
+
+            loadDisplayScript(0);
+            setInterval(() => {
+                const displayId = selectedDisplayId();
+                loadStatus(displayId);
+            }, 5000);
         }
 
         // NETWORK page
