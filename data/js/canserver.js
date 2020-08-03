@@ -74,6 +74,37 @@
     const show = element => element && element.classList && element.classList.remove('hidden');
     const hide = element => element && element.classList && element.classList.add('hidden');
 
+    const good = statusEl => {
+        statusEl.innerText = 'Good';
+        statusEl.classList.add('good');
+        statusEl.classList.remove('bad');
+    };
+
+    const bad = statusEl => {
+        statusEl.innerText = 'Bad';
+        statusEl.classList.add('bad');
+        statusEl.classList.remove('good');
+    };
+
+    const keyEventWithGracefulTabs = (textarea, e) => {
+        const keyCode = e.keyCode || e.which;
+
+        if (keyCode == 9) {
+            e.preventDefault();
+
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+
+            // set textarea value to: text before caret + tab + text after caret
+            textarea.value = (textarea.value.substring(0, start)
+                + "\t"
+                + textarea.value.substring(end));
+
+            // put caret at right position again
+            textarea.selectionStart = textarea.selectionEnd = start + 1;
+        }
+    }
+
     const startApp = () => {
         // STATUS page
         const statusEl = document.getElementById('status');
@@ -91,24 +122,10 @@
             const displaysScriptEl = displaysEl.querySelector('textarea#displayscript');
             const displaysSaveButtonEl = displaysEl.querySelector('button#save');
 
-            
-
             const selectedDisplayId = () => {
                 const selectedDisplayIndex = selectEl.selectedIndex;
                 return selectEl.options[selectedDisplayIndex].value;
             }
-
-            const good = statusEl => {
-                statusEl.innerText = 'Good';
-                statusEl.classList.add('good');
-                statusEl.classList.remove('bad');
-            };
-
-            const bad = statusEl => {
-                statusEl.innerText = 'Bad';
-                statusEl.classList.add('bad');
-                statusEl.classList.remove('good');
-            };
 
             const loadStatus = displayId => {
                 const stateEl = displaysEl.querySelector('span#scriptstate');
@@ -164,23 +181,8 @@
 
             // handle <tab> input
             displaysScriptEl.onkeydown = function(e) {
-              const keyCode = e.keyCode || e.which;
-            
-              if (keyCode == 9) {
-                e.preventDefault();
-
-                var start = this.selectionStart;
-                var end = this.selectionEnd;
-            
-                // set textarea value to: text before caret + tab + text after caret
-                this.value = (this.value.substring(0, start)
-                            + "\t"
-                            + this.value.substring(end));
-            
-                // put caret at right position again
-                this.selectionStart = this.selectionEnd = start + 1;
-              }
-            };
+                return keyEventWithGracefulTabs(this, e);
+            }
 
             displaysSaveButtonEl.onclick = () => {
                 const displayId = selectedDisplayId();
@@ -252,6 +254,62 @@
 
         // ANALYSIS page
         // TODO: refactor deferred because of potential conflicts
+
+        // SCRIPTS page
+        const scriptsEl = document.getElementById('scripts');
+
+        if (scriptsEl) {
+            const scriptsdataEl = scriptsEl.querySelector('#scriptsdata');
+            const scriptsdataSaveButtonEl = scriptsEl.querySelector('button#save');
+
+            const loadStatus = () => {
+                const stateEl = scriptsEl.querySelector('span#scriptstate');
+                const scriptstatsEl = scriptsEl.querySelector('div#scriptstats');
+                const errorsEl = scriptsEl.querySelector('span#errormessage');
+
+                return getJSON('/processing_stats').then(data => {
+                    if (data.state == true) {
+                        good(stateEl);
+                        
+                        scriptsEl.querySelector('span#meantime').innerText = data.mean;
+                        scriptsEl.querySelector('span#maxtime').innerText = data.max;
+                        scriptsEl.querySelector('span#mintime').innerText = data.min;
+                        scriptsEl.querySelector('span#stddevtime').innerText = data.stddev;
+                       
+                        show(scriptstatsEl);
+                        hide(errorsEl);
+                    } else {
+                        bad(stateEl);
+
+                        hide(scriptstatsEl);
+                        show(errorsEl);
+                    }
+                });
+            }
+
+            const saveScript = () => {
+                const postData = {
+                    script: scriptsEl.querySelector('#processingscript').value
+                };
+
+                return postJSON('/processing_save', postData).then(() => loadStatus());
+            }
+
+            getText('/processing_script').then(data => {
+                const textareaEl = el('textarea', { attributes: { id: 'processingscript', spellcheck: false } });
+                textareaEl.value = data;
+
+                scriptsdataEl.innerText = '';
+
+                scriptsdataEl.appendChild(textareaEl);
+                show(scriptsdataSaveButtonEl);
+
+                loadStatus();
+            });
+
+            scriptsdataSaveButtonEl.onclick = () => saveScript();
+            setInterval(loadStatus, 5000);
+        }
 
         // LOGS page
         const logsEl = document.getElementById('logs');
