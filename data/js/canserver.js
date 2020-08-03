@@ -34,6 +34,30 @@
     const getJSON = url => fetch(url).then(r => r.json()).catch(console.error);
     const postJSON = (url, data) => fetch(url, { method: 'POST', body: JSON.stringify(data) }).then(r => r.json()).catch(console.error);
 
+    // data conversion
+    const hexToDec = hex => {
+        let result = 0;
+        hex = hex.toLowerCase();
+
+        for (var i = 0; i < hex.length; i++) {
+            const digitValue = '0123456789abcdefgh'.indexOf(hex[i]);
+            result = result * 16 + digitValue;
+        }
+
+        return result;
+    }
+
+    const decToHex = (dec, padding) => {
+        var hex = Number(dec).toString(16).toUpperCase();
+        padding = typeof (padding) === "undefined" || padding === null ? padding = 2 : padding;
+    
+        while (hex.length < padding) {
+            hex = "0" + hex;
+        }
+    
+        return hex;
+    }
+
     // dom utils
     const el = (type, initial = {}) => {
         const element = document.createElement(type);
@@ -253,7 +277,130 @@
         }
 
         // ANALYSIS page
-        // TODO: refactor deferred because of potential conflicts
+        const analysisEl = document.getElementById('analysis');
+
+        if (analysisEl) {
+            const analysisNewEl = analysisEl.querySelector('#new');
+
+            getJSON('/analysis_load').then(data => {
+                const itemIds = Object.keys(data);
+                analysis.querySelector('tr#loading').remove();
+
+                itemIds.forEach(itemId => {
+                    let itemdetails = data[itemId];
+
+                    let itemRow = analysis.querySelector("tfoot tr#rowtemplate").cloneNode(true);
+                    itemRow.setAttribute('id', itemId);
+                    show(itemRow);
+
+                    inputBoxEl = itemRow.querySelector('input.name');
+                    inputBoxEl.value = itemId;
+
+                    let isBuiltIn = false;
+                    if ('builtIn' in itemdetails) {
+                        isBuiltIn = itemdetails.builtIn;
+                    }
+
+                    if (isBuiltIn) {
+                        inputBoxEl.disabled = true;
+                        inputBoxEl.setAttribute('alt', 'This is a built in item.  You can\'t change its name or delete it');
+                        inputBoxEl.setAttribute('title', 'This is a built in item.  You can\'t change its name or delete it');
+
+                        hide(itemRow.querySelector('a.delete'));
+                    }
+                    itemRow.querySelector('input.frameid').value = '0x' + decToHex(itemdetails.frameid, 3);
+                    itemRow.querySelector('input.startbit').value = itemdetails.startBit;
+                    itemRow.querySelector('input.bitlength').value = itemdetails.bitLength;
+                    itemRow.querySelector('input.factor').value = itemdetails.factor;
+                    itemRow.querySelector('input.signaloffset').value = itemdetails.signalOffset;
+                    itemRow.querySelector('input.issigned').checked = itemdetails.isSigned;
+                    itemRow.querySelector('input.littleendian').checked = itemdetails.byteOrder;
+                    itemRow.querySelector('a.save').onclick = function () { saveItem(this) };
+                    itemRow.querySelector('a.delete').onclick = function () { deleteItem(this) };
+                    analysis.querySelector('table tbody').appendChild(itemRow);
+                });
+
+                if (!itemIds || itemIds.length === 0) {
+                    show(analysis.querySelector('tr#noitems'))
+                }
+            });
+
+            function createNewItem() {
+                let itemRow = analysis.querySelector("tfoot tr#rowtemplate").cloneNode(true);
+
+                itemRow.setAttribute('id', '----new----');
+                itemRow.querySelector('a.save').onclick = function () { saveItem(this) };
+                itemRow.querySelector('a.delete').onclick = function () { deleteItem(this) };
+
+                show(itemRow);
+
+                analysis.querySelector('table tbody').appendChild(itemRow);
+                hide(analysis.querySelector('tr#noitems'));
+            }
+
+            function saveItem(rowhref) {
+                let rowToWorkOn = rowhref.parentElement.parentElement;
+                const newName = rowToWorkOn.querySelector('input.name').value;
+
+                let foundNameCount = 0;
+                analysis.querySelectorAll('input.name').forEach(obj => {
+                    if (obj.value == newName) {
+                        foundNameCount++;
+                    }
+                });
+
+                if (foundNameCount == 1) {
+                    let postInfo = {
+                        state: rowToWorkOn.getAttribute('id') === "----new----" ? 'new' : 'update',
+                        name: newName,
+                        frameid: hexToDec(rowToWorkOn.querySelector('input.frameid').value.substr(2)),
+                        startbit: Number(rowToWorkOn.querySelector('input.startbit').value),
+                        bitlength: Number(rowToWorkOn.querySelector('input.bitlength').value),
+                        factor: Number(rowToWorkOn.querySelector('input.factor').value),
+                        signaloffset: Number(rowToWorkOn.querySelector('input.signaloffset').value),
+                        issigned: rowToWorkOn.querySelector('input.issigned').checked,
+                        littleendian: rowToWorkOn.querySelector('input.littleendian').checked
+                    };
+
+                    postJSON('/analysis_save', postInfo).then(() => {
+                        window.location = "/analysis";
+                    });
+                } else {
+                    alert('You can\'t have duplicate names. Please choose a unique name');
+                }
+            }
+
+            function deleteItem(rowhref) {
+                const rowToDelete = rowhref.parentElement.parentElement;
+
+                if (rowToDelete.getAttribute('id') === "----new----") {
+                    rowToDelete.remove();
+                } else {
+                    const shouldDelete = confirm('Are you sure you want to delete this item?  If any displays are referencing it they will stop being able to display this data point.');
+
+                    if (shouldDelete) {
+                        const postInfo = {
+                            name: rowToDelete.getAttribute('id')
+                        };
+
+                        postJSON('/analysis_delete', postInfo).then(() => {
+                            window.location = "/analysis";
+                        });
+                    }
+                }
+            }
+
+            function updateLoad() {
+                getJSON('/analysis_update').then(data => {
+                    Object.keys(data).forEach(itemId => {
+                        analysis.querySelector('tr#' + itemId + ' td.value').innerHTML = data[itemId];
+                    });
+                });
+            }
+
+            analysisNewEl.onclick = () => createNewItem();
+            setInterval(updateLoad, 1000);
+        }
 
         // SCRIPTS page
         const scriptsEl = document.getElementById('scripts');
@@ -304,9 +451,17 @@
                 scriptsdataEl.appendChild(textareaEl);
                 show(scriptsdataSaveButtonEl);
 
+                // bootstrap TLN for line numbers
+                TLN.append_line_numbers('processingscript');
+
+                // handle <tab> input
+                textareaEl.onkeydown = function (e) {
+                    return keyEventWithGracefulTabs(this, e);
+                }
+
                 loadStatus();
             });
-
+            
             scriptsdataSaveButtonEl.onclick = () => saveScript();
             setInterval(loadStatus, 5000);
         }
