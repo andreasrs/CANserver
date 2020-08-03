@@ -451,7 +451,7 @@
 
                 scriptsdataEl.innerText = '';
 
-                scriptsdataEl.appendChild(textareaEl);
+                scriptsdataEl.appendChild(el('div', { attributes: { id: 'editorwrapper' }, children: [textareaEl] }));
                 show(scriptsdataSaveButtonEl);
 
                 // bootstrap TLN for line numbers
