@@ -267,53 +267,6 @@
             const populateValues = () => getJSON('/debug_update').then(data => {
                 updateDebugdata('');
 
-                if ('vehiclestatus' in data) {
-                    Object.keys(data.vehiclestatus).forEach(statusId => {
-                        const statusEl = el('div', {
-                            attributes: {
-                                id: statusId
-                            },
-                            children: [
-                                el('span', {
-                                    className: 'item',
-                                    inner: statusId + ':',
-                                    attributes: {
-                                        style: 'display: inline-block; min-width: 150px'
-                                    }
-                                }),
-                                el('span', {
-                                    className: 'value',
-                                    inner: data.vehiclestatus[statusId],
-                                    attributes: {
-                                        style: 'display: inline-block; min-width: 50px'
-                                    }
-                                }),
-
-                            ]
-                        });
-
-                        const inputEl = el('input', {
-                            attributes: {
-                                id: statusId
-                            }
-                        });
-
-                        inputEl.value = data.vehiclestatus[statusId];
-
-                        inputEl.onkeypress = e => {
-                            var key = e.which;
-                            if (key == 13) {
-                                postJSON('/debug_save', { 'key': e.target.id, 'value': e.target.value }, function () {
-                                    updateValues();
-                                });
-                            }
-                        }
-
-                        statusEl.appendChild(inputEl);
-                        debugDataEl.appendChild(statusEl);
-                    });
-                }
-
                 if ('dynamicanalysisitems' in data) {
                     debugDataEl.appendChild(el('h4', { inner: 'Dynamic Analysis Items' }));
 
@@ -328,18 +281,34 @@
                         debugDataEl.appendChild(dynamicEl);
                     });
                 }
+
+                if ("processeditems" in data) {
+                    debugDataEl.appendChild(el('h4', { inner: 'Processed Items'}));
+                    const processedEl = el('div', { attributes: { id: 'processeditems' } });
+                    
+                    Object.keys(data.processeditems).forEach(itemId => {
+                        const itemEl = el('div', { attributes: { id: itemId}, children: [
+                            el('span', { className: 'item', inner: itemId + ':'}),
+                            el('span', { className: 'value', inner: data.processeditems[itemId]})
+                        ]});
+
+                        processedEl.appendChild(itemEl);
+                    });
+                    
+                    debugDataEl.append(processedEl);
+                }
             });
 
             const updateValues = () => postJSON('debug_update').then(data => {
-                if ('vehiclestatus' in data) {
-                    Object.keys(data.vehiclestatus).forEach(statusId => {
-                        debug.querySelector('div#' + statusId + ' span.value').innerText = data.vehiclestatus[statusId];
-                    });
-                }
                 if ('dynamicanalysisitems' in data) {
                     Object.keys(data.dynamicanalysisitems).forEach(itemId => {
                         debug.querySelector('div#' + itemId + ' span.value').innerText = data.dynamicanalysisitems[itemId];
                     });
+                }
+                if ("processeditems" in data) {
+                    Object.keys(data.processeditems).forEach(itemId => {
+                        debug.querySelector('div#processeditems div#' + itemId + ' span.value').innerText =  data.processeditems[itemId];
+                    }); 
                 }
             });
 

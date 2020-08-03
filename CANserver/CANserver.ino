@@ -13,11 +13,12 @@
 #include "SDCard.h"
 #include "CanBus.h"
 #include "SPIFFileSystem.h"
-#include "DisplayState.h"
+#include "Displays.h"
 #include "WebServer.h"
 #include "PandaUDP.h"
 #include "CANUDP.h"
 #include "Logging.h"
+#include "LUAProcessor.h"
 
 #define LED1 1    //shared with serial tx - try not to use
 #define LED2 2    //onboard blue LED
@@ -57,7 +58,9 @@ void setup() {
     //Bring up CAN bus hardware
     CANServer::CanBus::instance()->setup();
 
-    CANServer::DisplayState::loadAll();
+    CANServer::Displays::instance()->setup();
+
+    CANServer::LUAProcessor::instance()->setup();
 
     //Bring up Web server
     CANServer::WebServer::setup();
@@ -76,6 +79,8 @@ void loop()
     CANServer::SerialPorts::handle();   
 
     CANServer::CanBus::instance()->handle();
+
+    CANServer::LUAProcessor::instance()->handle();
 
     unsigned long currentMillis = millis();
     if (currentMillis - previousMillisMemoryOutput >= 10000) 

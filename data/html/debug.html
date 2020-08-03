@@ -5,16 +5,27 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" type="text/css" href="/css/canserver.css">
     <script src="/js/canserver.js"></script>
+    <style>
+          body {font-family: sans-serif;}
+          
+          input {
+            width: 50px;
+            margin-left:10px;
+          }
+          .item {
+            display: inline-block;
+            width:250px;
+          }
+          .value {
+            display: inline-block;
+            width:50px;
+          }
+        </style>
   </head>
   <body>
     <nav>
       <ul>
-        <li><a href="/" tabindex="1">Status</a></li>
-        <li><a href="/config">Displays</a></li>
-        <li><a href="/network">Network</a></li>
-        <li><a href="/analysis">Analysis</a></li>
-        <li><a href="/logs">Logs</a></li>
-        <li class="active"><a href="/debug">Debug</a></li>
+        <li><a href="/" tabindex="1">Status</a></li><li><a href="/displays">Displays</a></li><li><a href="/network">Network</a></li><li><a href="/analysis">Analysis</a></li><li><a href="/processing">Scripts</a></li><li><a href="/logs">Logs</a></li><li class="active"><a href="/debug">Debug</a></li>
       </ul>
     </nav>
     <main id="debug">
