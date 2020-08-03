@@ -182,6 +182,7 @@ footer {
 }
 
 #editorwrapper {
+  margin-top: var(--medium);
   width: 100%;
   height: 60%;
 }
@@ -197,6 +198,25 @@ span#scriptstate.bad {
   color: #fff;
   background-color: #F00;
 }
+span.item {
+  display: inline-block;
+  width: 250px;
+}
+span.value {
+  display: inline-block;
+  width: 50px;
+}
 textarea {
   tab-size: 2;
+}
+
+#analysis tr td {
+  text-align: center;
+  padding: 2px 5px;
+}
+#analysis input.frameid, #analysis input.startbit, #analysis input.bitlength, #analysis input.factor, #analysis input.signaloffset {
+  width:50px;
+}
+#analysis tbody tr:nth-child(even) {
+  background-color: lightgrey; 
 }

@@ -1,6 +1,6 @@
 (() => {
     //https://github.com/MatheusAvellar/textarea-line-numbers
-    const TLN={eventList:{},update_line_numbers:function(e,t){let n=e.value.split("\n").length-t.children.length;if(n>0){const e=document.createDocumentFragment();for(;n>0;){const t=document.createElement("span");t.className="tln-line",e.appendChild(t),n--}t.appendChild(e)}for(;n<0;)t.removeChild(t.lastChild),n++},append_line_numbers:function(e){const t=document.getElementById(e);if(null==t)return console.warn("[tln.js] Couldn't find textarea of id '"+e+"'");if(-1!=t.className.indexOf("tln-active"))return console.warn("[tln.js] textarea of id '"+e+"' is already numbered");t.classList.add("tln-active"),t.style={};const n=document.createElement("div");n.className="tln-wrapper",t.parentNode.insertBefore(n,t),TLN.update_line_numbers(t,n),TLN.eventList[e]=[];const l=["propertychange","input","keydown","keyup"],o=function(e,t){return function(n){(10!=+e.scrollLeft||37!=n.keyCode&&37!=n.which&&"ArrowLeft"!=n.code&&"ArrowLeft"!=n.key)&&36!=n.keyCode&&36!=n.which&&"Home"!=n.code&&"Home"!=n.key&&13!=n.keyCode&&13!=n.which&&"Enter"!=n.code&&"Enter"!=n.key&&"NumpadEnter"!=n.code||(e.scrollLeft=0),TLN.update_line_numbers(e,t)}}(t,n);for(let n=l.length-1;n>=0;n--)t.addEventListener(l[n],o),TLN.eventList[e].push({evt:l[n],hdlr:o});const r=["change","mousewheel","scroll"],s=function(e,t){return function(){t.scrollTop=e.scrollTop}}(t,n);for(let n=r.length-1;n>=0;n--)t.addEventListener(r[n],s),TLN.eventList[e].push({evt:r[n],hdlr:s})},remove_line_numbers:function(e){const t=document.getElementById(e);if(null==t)return console.warn("[tln.js] Couldn't find textarea of id '"+e+"'");if(-1==t.className.indexOf("tln-active"))return console.warn("[tln.js] textarea of id '"+e+"' isn't numbered");t.classList.remove("tln-active");const n=t.previousSibling;if("tln-wrapper"==n.className&&n.remove(),TLN.eventList[e]){for(let n=TLN.eventList[e].length-1;n>=0;n--){const l=TLN.eventList[e][n];t.removeEventListener(l.evt,l.hdlr)}delete TLN.eventList[e]}}};
+    const TLN = { eventList: {}, update_line_numbers: function (e, t) { let n = e.value.split("\n").length - t.children.length; if (n > 0) { const e = document.createDocumentFragment(); for (; n > 0;) { const t = document.createElement("span"); t.className = "tln-line", e.appendChild(t), n-- } t.appendChild(e) } for (; n < 0;)t.removeChild(t.lastChild), n++ }, append_line_numbers: function (e) { const t = document.getElementById(e); if (null == t) return console.warn("[tln.js] Couldn't find textarea of id '" + e + "'"); if (-1 != t.className.indexOf("tln-active")) return console.warn("[tln.js] textarea of id '" + e + "' is already numbered"); t.classList.add("tln-active"), t.style = {}; const n = document.createElement("div"); n.className = "tln-wrapper", t.parentNode.insertBefore(n, t), TLN.update_line_numbers(t, n), TLN.eventList[e] = []; const l = ["propertychange", "input", "keydown", "keyup"], o = function (e, t) { return function (n) { (10 != +e.scrollLeft || 37 != n.keyCode && 37 != n.which && "ArrowLeft" != n.code && "ArrowLeft" != n.key) && 36 != n.keyCode && 36 != n.which && "Home" != n.code && "Home" != n.key && 13 != n.keyCode && 13 != n.which && "Enter" != n.code && "Enter" != n.key && "NumpadEnter" != n.code || (e.scrollLeft = 0), TLN.update_line_numbers(e, t) } }(t, n); for (let n = l.length - 1; n >= 0; n--)t.addEventListener(l[n], o), TLN.eventList[e].push({ evt: l[n], hdlr: o }); const r = ["change", "mousewheel", "scroll"], s = function (e, t) { return function () { t.scrollTop = e.scrollTop } }(t, n); for (let n = r.length - 1; n >= 0; n--)t.addEventListener(r[n], s), TLN.eventList[e].push({ evt: r[n], hdlr: s }) }, remove_line_numbers: function (e) { const t = document.getElementById(e); if (null == t) return console.warn("[tln.js] Couldn't find textarea of id '" + e + "'"); if (-1 == t.className.indexOf("tln-active")) return console.warn("[tln.js] textarea of id '" + e + "' isn't numbered"); t.classList.remove("tln-active"); const n = t.previousSibling; if ("tln-wrapper" == n.className && n.remove(), TLN.eventList[e]) { for (let n = TLN.eventList[e].length - 1; n >= 0; n--) { const l = TLN.eventList[e][n]; t.removeEventListener(l.evt, l.hdlr) } delete TLN.eventList[e] } } };
 
     // layout theming utils
     const colorThemes = {
@@ -53,11 +53,11 @@
     const decToHex = (dec, padding) => {
         var hex = Number(dec).toString(16).toUpperCase();
         padding = typeof (padding) === "undefined" || padding === null ? padding = 2 : padding;
-    
+
         while (hex.length < padding) {
             hex = "0" + hex;
         }
-    
+
         return hex;
     }
 
@@ -84,18 +84,6 @@
         }
 
         return element;
-    }
-
-    const populateInputValues = (parent, data) => {
-        Object.keys(data).forEach(id => {
-            const input = parent.querySelector('input#' + id);
-            input && (input.value = data[id]);
-        });
-    }
-
-    const showInputsWithLoadedData = (parent) => {
-        hide(parent.querySelector('div#loading'));
-        show(parent.querySelector('form#settingsform'));
     }
 
     const show = element => element && element.classList && element.classList.remove('hidden');
@@ -162,12 +150,12 @@
                 return getJSON('/display_stats?dispId=' + displayId).then(data => {
                     if (data.state == true) {
                         good(stateEl);
-                        
+
                         displaysEl.querySelector('span#meantime').innerText = data.mean;
                         displaysEl.querySelector('span#maxtime').innerText = data.max;
                         displaysEl.querySelector('span#mintime').innerText = data.min;
                         displaysEl.querySelector('span#stddevtime').innerText = data.stddev;
-                        
+
                         show(scriptstatsEl);
                         hide(errorsEl);
                     } else {
@@ -207,7 +195,7 @@
             TLN.append_line_numbers('displayscript');
 
             // handle <tab> input
-            displaysScriptEl.onkeydown = function(e) {
+            displaysScriptEl.onkeydown = function (e) {
                 return keyEventWithGracefulTabs(this, e);
             }
 
@@ -235,8 +223,13 @@
             // load network data
             getJSON('/network_update').then(data => {
                 if ('networksettings' in data) {
-                    populateInputValues(networkEl, data.networksettings);
-                    showInputsWithLoadedData(networkEl);
+                    Object.keys(data.networksettings).forEach(id => {
+                        const input = networkEl.querySelector('input#' + id);
+                        input && (input.value = data.networksettings[id]);
+                    });
+
+                    hide(networkEl.querySelector('div#loading'));
+                    show(networkEl.querySelector('form#settingsform'));
                 }
             });
 
@@ -328,7 +321,7 @@
                 }
             });
 
-            function createNewItem() {
+            const createNewItem = () => {
                 let itemRow = analysis.querySelector("tfoot tr#rowtemplate").cloneNode(true);
 
                 itemRow.setAttribute('id', '----new----');
@@ -341,7 +334,7 @@
                 hide(analysis.querySelector('tr#noitems'));
             }
 
-            function saveItem(rowhref) {
+            const saveItem = (rowhref) => {
                 let rowToWorkOn = rowhref.parentElement.parentElement;
                 const newName = rowToWorkOn.querySelector('input.name').value;
 
@@ -373,7 +366,7 @@
                 }
             }
 
-            function deleteItem(rowhref) {
+            const deleteItem = (rowhref) => {
                 const rowToDelete = rowhref.parentElement.parentElement;
 
                 if (rowToDelete.getAttribute('id') === "----new----") {
@@ -420,12 +413,12 @@
                 return getJSON('/processing_stats').then(data => {
                     if (data.state == true) {
                         good(stateEl);
-                        
+
                         scriptsEl.querySelector('span#meantime').innerText = data.mean;
                         scriptsEl.querySelector('span#maxtime').innerText = data.max;
                         scriptsEl.querySelector('span#mintime').innerText = data.min;
                         scriptsEl.querySelector('span#stddevtime').innerText = data.stddev;
-                       
+
                         show(scriptstatsEl);
                         hide(errorsEl);
                     } else {
@@ -464,7 +457,7 @@
 
                 loadStatus();
             });
-            
+
             scriptsdataSaveButtonEl.onclick = () => saveScript();
             setInterval(loadStatus, 5000);
         }
@@ -518,7 +511,7 @@
                                 id: entryId
                             }
                         });
-                        
+
                         const loginfo = response[entryId];
                         inputEl.checked = loginfo.enabled;
                         logentryEl.appendChild(inputEl);
@@ -604,18 +597,20 @@
                 }
 
                 if ("processeditems" in data) {
-                    debugDataEl.appendChild(el('h4', { inner: 'Processed Items'}));
+                    debugDataEl.appendChild(el('h4', { inner: 'Processed Items' }));
                     const processedEl = el('div', { attributes: { id: 'processeditems' } });
-                    
+
                     Object.keys(data.processeditems).forEach(itemId => {
-                        const itemEl = el('div', { attributes: { id: itemId}, children: [
-                            el('span', { className: 'item', inner: itemId + ':'}),
-                            el('span', { className: 'value', inner: data.processeditems[itemId]})
-                        ]});
+                        const itemEl = el('div', {
+                            attributes: { id: itemId }, children: [
+                                el('span', { className: 'item', inner: itemId + ':' }),
+                                el('span', { className: 'value', inner: data.processeditems[itemId] })
+                            ]
+                        });
 
                         processedEl.appendChild(itemEl);
                     });
-                    
+
                     debugDataEl.append(processedEl);
                 }
             });
@@ -628,8 +623,8 @@
                 }
                 if ("processeditems" in data) {
                     Object.keys(data.processeditems).forEach(itemId => {
-                        debug.querySelector('div#processeditems div#' + itemId + ' span.value').innerText =  data.processeditems[itemId];
-                    }); 
+                        debug.querySelector('div#processeditems div#' + itemId + ' span.value').innerText = data.processeditems[itemId];
+                    });
                 }
             });
 
