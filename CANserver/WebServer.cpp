@@ -773,21 +773,9 @@ littleendian: true
 
 
             //Static content related URL handling
-            server.on("/js/canserver.js", HTTP_GET,  [](AsyncWebServerRequest *request){
-                AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/js/canserver.js", "application/javascript");
-                response->addHeader("Cache-Control", "max-age=600");
-                request->send(response);
-            });
-
             server.on("/js/app.js", HTTP_GET,  [](AsyncWebServerRequest *request){
                 AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/js/app.js", "application/javascript");
                 //response->addHeader("Cache-Control", "max-age=600");
-                request->send(response);
-            });
-
-            server.on("/css/canserver.css", HTTP_GET,  [](AsyncWebServerRequest *request){
-                AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/css/canserver.css", "text/css");
-                response->addHeader("Cache-Control", "max-age=600");
                 request->send(response);
             });
 
