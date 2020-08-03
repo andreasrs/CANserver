@@ -50,6 +50,12 @@ nav {
     border-bottom: 2px solid var(--color-1);
 }
 
+@media screen and (max-width: 320px) {
+    nav {
+        font-size: 11px;
+    }
+}
+
 nav a {
     text-decoration: none;
 }
@@ -200,7 +206,7 @@ span#scriptstate.bad {
 }
 span.item {
   display: inline-block;
-  width: 250px;
+  width: 200px;
 }
 span.value {
   display: inline-block;
